@@ -17,6 +17,7 @@ contract MultiEventsPredictions is ERC1155Supply {
         string condition;
         uint256 outcomeIndex;
         uint256 totalSharesAmount;
+        uint256 initialSharesPrice;
         PredictionStatus status;
     }
 
@@ -67,7 +68,8 @@ contract MultiEventsPredictions is ERC1155Supply {
     function createPrediction(
         address admin,
         string memory condition,
-        string[] memory outcomes
+        string[] memory outcomes,
+        uint256 initialSharesPrice
     ) public returns (uint256) {
         require(admin != address(0), "Invalid admin address");
         require(outcomes.length > 1, "At least 2 outcomes required");
@@ -79,6 +81,7 @@ contract MultiEventsPredictions is ERC1155Supply {
             condition: condition,
             outcomeIndex: 0,
             totalSharesAmount: 0,
+            initialSharesPrice: initialSharesPrice,
             status: PredictionStatus.CREATED
         });
 
@@ -244,9 +247,9 @@ contract MultiEventsPredictions is ERC1155Supply {
             uint256 totalSharesAmount = prediction.totalSharesAmount;
             uint256 totalSupplyOutcome = totalSupply(outcomeId);
             if (totalSupplyOutcome > 0) {
-                return ((totalSupplyOutcome * 10**6) / (totalSharesAmount * 10**6)) * 10**6; // 6 decimals value
+                return (totalSupplyOutcome * 10**6) / (totalSharesAmount); // 6 decimals value
             }
-            return 500000; // 0.5 USDC
+            return prediction.initialSharesPrice;
         } else if (prediction.status == PredictionStatus.RESOLVED) {
             uint256 winningOutcomeTokenId = winningTokenId[id];
             if (winningOutcomeTokenId == outcomeId) {
@@ -257,6 +260,3 @@ contract MultiEventsPredictions is ERC1155Supply {
         return 0;
     }
 }
-
-
-//TODO: -permit approval logic, -test all functions, -deploy script
