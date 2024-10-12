@@ -133,12 +133,11 @@ contract MultiEventsPredictions is ERC1155Supply {
         IERC20 token = IERC20(predictionTokenAddress);
         uint256 totalTokensAmount = 0;
 
-        for (uint256 i = 0; i < sharesAmount; i++) {
-            uint256 sharePrice = predictionSharePrice(id, outcomeId);
-            totalTokensAmount += sharePrice;
-            prediction.totalSharesAmount += 1;
-            _mint(msg.sender, outcomeId, 1, "");
-        }
+        uint256 sharePrice = predictionSharePrice(id, outcomeId, sharesAmount);
+        totalTokensAmount += sharePrice;
+        prediction.totalSharesAmount += sharesAmount;
+        _mint(msg.sender, outcomeId, sharesAmount, "");
+        
 
         token.safeTransferFrom(msg.sender, address(this), totalTokensAmount);
 
@@ -165,12 +164,10 @@ contract MultiEventsPredictions is ERC1155Supply {
         IERC20 token = IERC20(predictionTokenAddress);
         uint256 totalTokensAmount = 0;
 
-        for (uint256 i = 0; i < sharesAmount; i++) {
-            uint256 sharePrice = predictionSharePrice(id, outcomeId);
-            totalTokensAmount += sharePrice;
-            prediction.totalSharesAmount -= 1;
-            _burn(msg.sender, outcomeId, 1);
-        }
+        uint256 sharePrice = predictionSharePrice(id, outcomeId, sharesAmount);
+        totalTokensAmount += sharePrice;
+        prediction.totalSharesAmount -= sharesAmount;
+        _burn(msg.sender, outcomeId, sharesAmount);
 
         token.safeTransfer(msg.sender, totalTokensAmount);
 
@@ -231,32 +228,51 @@ contract MultiEventsPredictions is ERC1155Supply {
     }
 
     /**
-     * @dev Returns the share price for a specific prediction outcome.
-     * @param id The ID of the prediction.
-     * @param outcomeId The ERC1155 tokenId of the outcome.
-     * @return The share price of the prediction outcome.
-     */
+    * @dev Returns the total price for a specific amount of shares of a prediction outcome,
+    * including handling the case where the total supply is zero without a loop.
+    * @param id The ID of the prediction.
+    * @param outcomeId The ERC1155 tokenId of the outcome.
+    * @param sharesAmount The number of shares to buy/sell.
+    * @return The total price for the specified number of shares, including price impact.
+    */
     function predictionSharePrice(
         uint256 id,
-        uint256 outcomeId
+        uint256 outcomeId,
+        uint256 sharesAmount
     ) public view returns (uint256) {
+        require(sharesAmount > 0, "Shares amount must be greater than zero");
+
         Prediction storage prediction = predictions[id];
         require(prediction.admin != address(0), "Prediction does not exist");
 
         if (prediction.status == PredictionStatus.CREATED) {
             uint256 totalSharesAmount = prediction.totalSharesAmount;
             uint256 totalSupplyOutcome = totalSupply(outcomeId);
+            
+            uint256 totalPrice = 0;
+
             if (totalSupplyOutcome > 0) {
-                return (totalSupplyOutcome * 10**6) / (totalSharesAmount); // 6 decimals value
+                // Normal case when there are already shares in circulation
+                uint256 initialPricePerShare = (totalSupplyOutcome * 10**6) / totalSharesAmount;
+                uint256 newSupplyOutcome = totalSupplyOutcome + sharesAmount;
+                uint256 finalPricePerShare = (newSupplyOutcome * 10**6) / totalSharesAmount;
+
+                // Use the average price between the initial and final price for all shares
+                uint256 averagePricePerShare = (initialPricePerShare + finalPricePerShare) / 2;
+                return averagePricePerShare * sharesAmount;
+            } else {
+                
             }
-            return prediction.initialSharesPrice;
         } else if (prediction.status == PredictionStatus.RESOLVED) {
             uint256 winningOutcomeTokenId = winningTokenId[id];
             if (winningOutcomeTokenId == outcomeId) {
-                return 10**6; // 1 USDC
+                return 10**6 * sharesAmount; // 1 USDC per share * number of shares
             }
             return 0;
         }
+        
         return 0;
     }
+
+
 }
