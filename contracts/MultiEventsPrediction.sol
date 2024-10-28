@@ -104,17 +104,17 @@ contract MultiEventsPrediction is IMultiEventsPrediction, ERC1155Supply {
 
         if (prediction.status == PredictionStatus.CREATED) {
             // If there are no shares in circulation, it is virtual 1 share
-            uint256 totalSharesAmount = prediction.totalSharesAmount > 0 ? prediction.totalSharesAmount : 1;
-            uint256 totalSupplyOutcome = totalSupply(shareIdToken) > 0 ? totalSupply(shareIdToken) : 1;
+            uint256 totalSharesAmount = prediction.totalSharesAmount; // 8
+            uint256 totalSupplyOutcome = totalSupply(shareIdToken) > 0 ? totalSupply(shareIdToken) : 1; //1
             
             // Calculate the initial and final price per share
-            uint256 initialPricePerShare = (totalSupplyOutcome * 10**6) / totalSharesAmount; //(3000000) / 7 = 428571   .428571 -> 
-            uint256 newSupplyOutcome = totalSupplyOutcome + sharesAmount;
-            uint256 finalPricePerShare = (newSupplyOutcome * 10**6) / totalSharesAmount;
+            uint256 initialPricePerShare = (totalSupplyOutcome * 10**6) / totalSharesAmount; // 1000000 / 8 = 125000
+            uint256 newSupplyOutcome = totalSupplyOutcome + sharesAmount; // 1 + 5 = 6
+            uint256 finalPricePerShare = (newSupplyOutcome * 10**6) / totalSharesAmount; // 6000000 / 8 = 750000
 
             // Use the average price between the initial and final price for all shares
-            uint256 averagePricePerShare = (initialPricePerShare + finalPricePerShare) / 2;
-            return averagePricePerShare * sharesAmount;
+            uint256 averagePricePerShare = (initialPricePerShare + finalPricePerShare) / 2; // (125000 + 750000) / 2 = 437500
+            return averagePricePerShare * sharesAmount; // 437500 * 5 = 2187500
 
         } else if (prediction.status == PredictionStatus.RESOLVED) {
             uint256 winningOutcomeTokenId = winningTokenId[id];
@@ -153,7 +153,7 @@ contract MultiEventsPrediction is IMultiEventsPrediction, ERC1155Supply {
             admin: admin,
             condition: condition,
             outcomeIndex: 0,
-            totalSharesAmount: 0,
+            totalSharesAmount: outcomes.length,
             initialSharesPrice: initialSharesPrice,
             status: PredictionStatus.CREATED
         });

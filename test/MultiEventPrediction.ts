@@ -99,16 +99,16 @@ describe("MultiEventPrediction", function () {
 
         // Distribution of bets (uneven to test price impact)
         const bets = [
-            { signer: 0, outcome: 0, amount: 5 },  // Player 1 bets 5 shares on outcome 1
-            { signer: 1, outcome: 0, amount: 3 },  // Player 2 bets 3 shares on outcome 1
-            { signer: 2, outcome: 1, amount: 4 },  // Player 3 bets 4 shares on outcome 2
-            { signer: 3, outcome: 2, amount: 2 },  // Player 4 bets 2 shares on outcome 3
-            { signer: 4, outcome: 2, amount: 6 },  // Player 5 bets 6 shares on outcome 3
-            { signer: 5, outcome: 3, amount: 3 },  // Player 6 bets 3 shares on outcome 4
-            { signer: 6, outcome: 4, amount: 4 },  // Player 7 bets 4 shares on outcome 5
-            { signer: 7, outcome: 5, amount: 2 },  // Player 8 bets 2 shares on outcome 6
-            { signer: 8, outcome: 6, amount: 5 },  // Player 9 bets 5 shares on outcome 7
-            { signer: 9, outcome: 7, amount: 3 },  // Player 10 bets 3 shares on outcome 8
+            { signer: 0, outcome: 0, amount: 1 },  // Player 1 bets 5 shares on outcome 1
+            { signer: 1, outcome: 1, amount: 1 },  // Player 2 bets 3 shares on outcome 1
+            { signer: 2, outcome: 2, amount: 1 },  // Player 3 bets 4 shares on outcome 2
+            { signer: 3, outcome: 3, amount: 1 },  // Player 4 bets 2 shares on outcome 3
+            { signer: 4, outcome: 4, amount: 1 },  // Player 5 bets 6 shares on outcome 4
+            { signer: 5, outcome: 5, amount: 1 },  // Player 6 bets 3 shares on outcome 5
+            { signer: 6, outcome: 6, amount: 1 },  // Player 7 bets 4 shares on outcome 6
+            { signer: 7, outcome: 7, amount: 1 },  // Player 8 bets 2 shares on outcome 7
+            { signer: 8, outcome: 8, amount: 1 },  // Player 9 bets 5 shares on outcome 8
+            { signer: 9, outcome: 9, amount: 1 },  // Player 10 bets 3 shares on outcome 9
         ];
 
         console.log("\nPlacing bets...");
@@ -127,6 +127,16 @@ describe("MultiEventPrediction", function () {
             console.log("shareIdToken", shareIdToken);
             const priceBeforeBet = await multiEventPrediction.predictionSharePrice(1, shareIdToken, sharesAmount);
             console.log("priceBeforeBet", priceBeforeBet);
+            const priceFor1Share = await multiEventPrediction.predictionSharePrice(1, shareIdToken, 1);
+            console.log("priceFor1Share", ethers.formatUnits(priceFor1Share, 6));
+
+            // log sum of all shares price
+            let sum = BigInt(0);  // Initialize as BigInt
+            for (let i = 1; i <= outcomes.length; i++) {
+                const price = await multiEventPrediction.predictionSharePrice(1, BigInt(i), 1);
+                sum += price;  // Now both are BigInt
+            }
+            console.log("sum", ethers.formatUnits(sum, 6));
             
             // Approve and place bet
             await usdc.connect(signer).approve(multiEventPrediction.target, priceBeforeBet);
